@@ -5,9 +5,11 @@ import pyperclip
 import tiktoken
 import xml.sax.saxutils as saxutils
 
+
 def num_tokens_from_string(string: str, encoding_name: str = "o200k_base") -> int:
     encoding = tiktoken.get_encoding(encoding_name)
     return len(encoding.encode(string))
+
 
 class FileSelectorGUI:
     def __init__(self, master):
@@ -25,7 +27,8 @@ class FileSelectorGUI:
         dir_frame = tk.Frame(self.master)
         dir_frame.pack(pady=5, fill=tk.X)
 
-        self.select_dir_button = tk.Button(dir_frame, text="Select Directory (Text Files)", command=self.select_directory)
+        self.select_dir_button = tk.Button(dir_frame, text="Select Directory (Text Files)",
+                                           command=self.select_directory)
         self.select_dir_button.pack(side=tk.LEFT, padx=5)
 
         self.directory_label = tk.Label(dir_frame, text="No directory selected")
@@ -43,7 +46,8 @@ class FileSelectorGUI:
         cs_label.pack(anchor='w')
 
         cs_scroll = tk.Scrollbar(cs_frame, orient=tk.VERTICAL)
-        self.file_listbox = tk.Listbox(cs_frame, selectmode=tk.EXTENDED, yscrollcommand=cs_scroll.set, exportselection=0)
+        self.file_listbox = tk.Listbox(cs_frame, selectmode=tk.EXTENDED, yscrollcommand=cs_scroll.set,
+                                       exportselection=0)
         self.file_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         cs_scroll.config(command=self.file_listbox.yview)
         cs_scroll.pack(side=tk.RIGHT, fill=tk.Y)
@@ -58,7 +62,8 @@ class FileSelectorGUI:
         meta_label.pack(anchor='w')
 
         meta_scroll = tk.Scrollbar(meta_frame, orient=tk.VERTICAL)
-        self.meta_listbox = tk.Listbox(meta_frame, selectmode=tk.EXTENDED, yscrollcommand=meta_scroll.set, exportselection=0)
+        self.meta_listbox = tk.Listbox(meta_frame, selectmode=tk.EXTENDED, yscrollcommand=meta_scroll.set,
+                                       exportselection=0)
         self.meta_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         meta_scroll.config(command=self.meta_listbox.yview)
         meta_scroll.pack(side=tk.RIGHT, fill=tk.Y)
@@ -75,7 +80,8 @@ class FileSelectorGUI:
         instr_label.pack(anchor='w')
 
         instr_scroll = tk.Scrollbar(instr_frame, orient=tk.VERTICAL)
-        self.instr_listbox = tk.Listbox(instr_frame, selectmode=tk.EXTENDED, yscrollcommand=instr_scroll.set, exportselection=0)
+        self.instr_listbox = tk.Listbox(instr_frame, selectmode=tk.EXTENDED, yscrollcommand=instr_scroll.set,
+                                        exportselection=0)
         self.instr_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         instr_scroll.config(command=self.instr_listbox.yview)
         instr_scroll.pack(side=tk.RIGHT, fill=tk.Y)
@@ -99,7 +105,8 @@ class FileSelectorGUI:
         action_frame = tk.Frame(self.master)
         action_frame.pack(pady=10)
 
-        self.load_files_button = tk.Button(action_frame, text="Build and Copy Prompt", command=self.build_and_copy_prompt)
+        self.load_files_button = tk.Button(action_frame, text="Build and Copy Prompt",
+                                           command=self.build_and_copy_prompt)
         self.load_files_button.pack(side=tk.LEFT, padx=5)
 
         self.exit_button = tk.Button(action_frame, text="Exit", command=self.master.quit)
@@ -151,7 +158,7 @@ class FileSelectorGUI:
             if self.can_read_as_utf8(file_path):
                 self.file_listbox.insert(tk.END, filename)
 
-    import xml.sax.saxutils as saxutils
+
 
     def get_selected_files_text(self, directory, listbox):
         """Combine the text from selected files in the given listbox from directory."""
@@ -229,7 +236,8 @@ class FileSelectorGUI:
                 and not self.meta_listbox.curselection()
                 and not self.instr_listbox.curselection()
                 and not self.text_input.get("1.0", tk.END).strip()):
-            messagebox.showwarning("No input", "Please select files and/or choose meta prompts, instructions, or add text.")
+            messagebox.showwarning("No input",
+                                   "Please select files and/or choose meta prompts, instructions, or add text.")
             return
 
         full_prompt = self.get_current_prompt()
@@ -240,6 +248,7 @@ class FileSelectorGUI:
 
         messagebox.showinfo("Prompt Built",
                             f"Your prompt has been built and copied to the clipboard.\nToken count: {token_count:,}")
+
 
 if __name__ == "__main__":
     root = tk.Tk()
