@@ -1,0 +1,5 @@
+Please start each sentance of your response with a new letter of the alphabet.
+For example, the first sentance should start with the letter "A", the second with the letter "B", and so on.
+This will help you to remember the order of the sentances.  If you run out of letters, start over with "A" again.  Please begin your response with the letter "A".
+
+
