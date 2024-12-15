@@ -24,7 +24,7 @@ class FileSelectorGUI:
         dir_frame = tk.Frame(self.master)
         dir_frame.pack(pady=5, fill=tk.X)
 
-        self.select_dir_button = tk.Button(dir_frame, text="Select Directory (C# Files)", command=self.select_directory)
+        self.select_dir_button = tk.Button(dir_frame, text="Select Directory (Text Files)", command=self.select_directory)
         self.select_dir_button.pack(side=tk.LEFT, padx=5)
 
         self.directory_label = tk.Label(dir_frame, text="No directory selected")
@@ -34,11 +34,11 @@ class FileSelectorGUI:
         lists_frame = tk.Frame(self.master)
         lists_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # --- C# Files Listbox ---
+        # --- C# (or any text) Files Listbox ---
         cs_frame = tk.Frame(lists_frame)
         cs_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
 
-        cs_label = tk.Label(cs_frame, text="Select C# Files:")
+        cs_label = tk.Label(cs_frame, text="Select Files (any text-based):")
         cs_label.pack(anchor='w')
 
         cs_scroll = tk.Scrollbar(cs_frame, orient=tk.VERTICAL)
@@ -64,7 +64,6 @@ class FileSelectorGUI:
 
         self.meta_listbox.bind("<<ListboxSelect>>", lambda e: self.update_token_count())
 
-        # Populate meta prompts if directory exists
         self.populate_listbox_from_dir(self.meta_listbox, self.meta_prompts_dir, ".txt")
 
         # --- Instructions Listbox ---
@@ -82,7 +81,6 @@ class FileSelectorGUI:
 
         self.instr_listbox.bind("<<ListboxSelect>>", lambda e: self.update_token_count())
 
-        # Populate instructions if directory exists
         self.populate_listbox_from_dir(self.instr_listbox, self.instructions_dir, ".txt")
 
         # Frame for text input
@@ -110,7 +108,7 @@ class FileSelectorGUI:
         self.token_count_label = tk.Label(self.master, text="Token count: 0")
         self.token_count_label.pack(pady=5)
 
-        # Internal variable to store directory path for C# files
+        # Internal variable to store directory path for user-selected files
         self.selected_directory = None
         # Initial token count calculation
         self.update_token_count()
@@ -126,41 +124,52 @@ class FileSelectorGUI:
         if directory:
             self.selected_directory = directory
             self.directory_label.config(text=directory)
-            self.populate_cs_files(directory)
+            self.populate_all_files(directory)
             self.update_token_count()
 
-    def populate_cs_files(self, directory):
+    def populate_all_files(self, directory):
         self.file_listbox.delete(0, tk.END)
-        for filename in os.listdir(directory):
-            if filename.endswith(".cs"):
-                self.file_listbox.insert(tk.END, filename)
+        # Load all files, no filter
+        files = os.listdir(directory)
+        for filename in files:
+            # We show all files. If it's binary or not readable, we'll skip later during reading.
+            self.file_listbox.insert(tk.END, filename)
 
     def get_selected_files_text(self, directory, listbox):
         """Combine the text from selected files in the given listbox from directory."""
         selected_files = [listbox.get(i) for i in listbox.curselection()]
+        if not directory:
+            return ""
+
         combined = ''
         separator = '\n\n' + '#' * 25 + '\n\n'
         for f in selected_files:
             file_path = os.path.join(directory, f)
             if os.path.exists(file_path):
-                with open(file_path, 'r', encoding='utf-8') as file:
-                    file_content = file.read()
-                    combined += file_content + separator
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as file:
+                        file_content = file.read()
+                    if combined:
+                        combined += separator
+                    combined += file_content
+                except (UnicodeDecodeError, PermissionError):
+                    # If file can't be read as text, skip it quietly
+                    pass
         return combined.strip()
 
     def get_current_prompt(self):
-        # Get C# files content
-        cs_content = ''
-        if self.selected_directory:
-            cs_content = self.get_selected_files_text(self.selected_directory, self.file_listbox)
-            if cs_content:
-                cs_content = "### Contextual Prompt (from selected files) ###\n" + cs_content
+        # Get content from selected files in the chosen directory
+        all_files_content = self.get_selected_files_text(self.selected_directory, self.file_listbox)
+        if all_files_content:
+            all_files_content = "### Contextual Prompt (from selected files) ###\n" + all_files_content
 
         # Get meta prompts content
         meta_content = self.get_selected_files_text(self.meta_prompts_dir, self.meta_listbox)
 
         # Get instructions content
         instructions_content = self.get_selected_files_text(self.instructions_dir, self.instr_listbox)
+        if instructions_content:
+            instructions_content = "### Instructions ###\n" + instructions_content
 
         # Get user text
         user_text = self.text_input.get("1.0", tk.END).strip()
@@ -171,10 +180,10 @@ class FileSelectorGUI:
         parts = []
         if meta_content:
             parts.append(meta_content)
-        if cs_content:
-            parts.append(cs_content)
+        if all_files_content:
+            parts.append(all_files_content)
         if instructions_content:
-            parts.append("### Instructions ###\n" + instructions_content)
+            parts.append(instructions_content)
         if user_text:
             parts.append(user_text)
 
@@ -189,11 +198,12 @@ class FileSelectorGUI:
         self.token_count_label.config(text=f"Token count: {token_count:,}")
 
     def build_and_copy_prompt(self):
+        # If nothing selected and no text, warn
         if (not self.selected_directory
                 and not self.meta_listbox.curselection()
                 and not self.instr_listbox.curselection()
                 and not self.text_input.get("1.0", tk.END).strip()):
-            messagebox.showwarning("No input", "Please select a C# directory and/or choose meta prompts, instructions, or add text.")
+            messagebox.showwarning("No input", "Please select files and/or choose meta prompts, instructions, or add text.")
             return
 
         full_prompt = self.get_current_prompt()
