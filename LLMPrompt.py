@@ -87,7 +87,7 @@ class FileSelectorGUI:
         text_frame = tk.Frame(self.master)
         text_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        text_label = tk.Label(text_frame, text="Paste additional text here:")
+        text_label = tk.Label(text_frame, text="Add your prompt, or paste additional text here:")
         text_label.pack(anchor="w")
 
         self.text_input = tk.Text(text_frame, height=10)
@@ -186,18 +186,28 @@ class FileSelectorGUI:
         # Get user text
         user_text = self.text_input.get("1.0", tk.END).strip()
         if user_text:
-            user_text = "### Prompt and/or code to address ###\n" + user_text
+            user_text = "### Direct Prompt from User and/or code to address ###\n" + user_text
 
         # Combine all parts
         parts = []
+        parts.append("<FullPrompt>")
         if meta_content:
+            parts.append("<MetaPrompt>")
             parts.append(meta_content)
+            parts.append("</MetaPrompt>")
         if all_files_content:
+            parts.append("<ContextualPrompt>")
             parts.append(all_files_content)
+            parts.append("</ContextualPrompt>")
         if instructions_content:
+            parts.append("<Instructions>")
             parts.append(instructions_content)
+            parts.append("</Instructions>")
         if user_text:
+            parts.append("<DirectPrompt>")
             parts.append(user_text)
+            parts.append("</DirectPrompt>")
+        parts.append("</FullPrompt>")
 
         full_prompt = "\n\n".join(parts).strip()
         return full_prompt
