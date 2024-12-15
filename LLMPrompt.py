@@ -3,6 +3,7 @@ from tkinter import filedialog, messagebox
 import os
 import pyperclip
 import tiktoken
+import xml.sax.saxutils as saxutils
 
 def num_tokens_from_string(string: str, encoding_name: str = "o200k_base") -> int:
     encoding = tiktoken.get_encoding(encoding_name)
@@ -150,6 +151,8 @@ class FileSelectorGUI:
             if self.can_read_as_utf8(file_path):
                 self.file_listbox.insert(tk.END, filename)
 
+    import xml.sax.saxutils as saxutils
+
     def get_selected_files_text(self, directory, listbox):
         """Combine the text from selected files in the given listbox from directory."""
         selected_files = [listbox.get(i) for i in listbox.curselection()]
@@ -166,7 +169,8 @@ class FileSelectorGUI:
                     file_content = file.read()
                 if combined:
                     combined += separator
-                combined += file_content
+                sanitized_filename = saxutils.escape(f)
+                combined += f"<{sanitized_filename}>\n{file_content}\n</{sanitized_filename}>"
         return combined.strip()
 
     def get_current_prompt(self):
