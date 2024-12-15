@@ -34,11 +34,11 @@ class FileSelectorGUI:
         lists_frame = tk.Frame(self.master)
         lists_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # --- C# (or any text) Files Listbox ---
+        # --- Files Listbox (filtered for UTF-8 readable text) ---
         cs_frame = tk.Frame(lists_frame)
         cs_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
 
-        cs_label = tk.Label(cs_frame, text="Select Files (any text-based):")
+        cs_label = tk.Label(cs_frame, text="Select Files (text-based only):")
         cs_label.pack(anchor='w')
 
         cs_scroll = tk.Scrollbar(cs_frame, orient=tk.VERTICAL)
@@ -124,16 +124,31 @@ class FileSelectorGUI:
         if directory:
             self.selected_directory = directory
             self.directory_label.config(text=directory)
-            self.populate_all_files(directory)
+            self.populate_text_files(directory)
             self.update_token_count()
 
-    def populate_all_files(self, directory):
+    def can_read_as_utf8(self, file_path, chunk_size=8192):
+        # Try reading a small chunk of the file to determine if it's UTF-8 text
+        if not os.path.isfile(file_path):
+            return False
+        try:
+            with open(file_path, 'rb') as f:
+                data = f.read(chunk_size)
+            # Attempt decode as UTF-8
+            data.decode('utf-8')
+            return True
+        except (UnicodeDecodeError, PermissionError):
+            return False
+
+    def populate_text_files(self, directory):
         self.file_listbox.delete(0, tk.END)
-        # Load all files, no filter
+        # Load all files and check if they are readable as UTF-8 text
         files = os.listdir(directory)
         for filename in files:
-            # We show all files. If it's binary or not readable, we'll skip later during reading.
-            self.file_listbox.insert(tk.END, filename)
+            file_path = os.path.join(directory, filename)
+            # Only display if we can read it as UTF-8
+            if self.can_read_as_utf8(file_path):
+                self.file_listbox.insert(tk.END, filename)
 
     def get_selected_files_text(self, directory, listbox):
         """Combine the text from selected files in the given listbox from directory."""
@@ -146,19 +161,16 @@ class FileSelectorGUI:
         for f in selected_files:
             file_path = os.path.join(directory, f)
             if os.path.exists(file_path):
-                try:
-                    with open(file_path, 'r', encoding='utf-8') as file:
-                        file_content = file.read()
-                    if combined:
-                        combined += separator
-                    combined += file_content
-                except (UnicodeDecodeError, PermissionError):
-                    # If file can't be read as text, skip it quietly
-                    pass
+                # We know these should be UTF-8 readable now.
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    file_content = file.read()
+                if combined:
+                    combined += separator
+                combined += file_content
         return combined.strip()
 
     def get_current_prompt(self):
-        # Get content from selected files in the chosen directory
+        # Get content from selected text files in the chosen directory
         all_files_content = self.get_selected_files_text(self.selected_directory, self.file_listbox)
         if all_files_content:
             all_files_content = "### Contextual Prompt (from selected files) ###\n" + all_files_content
